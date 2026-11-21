@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#100d20">
+  <title>LuckyLab — TRX Testnet Games</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="#"><span class="logo">✦</span> LUCKY<span>LAB</span></a>
+    <div class="top-right"><span id="network" class="network">NILE TESTNET · DEMO</span><button id="connect" class="wallet-btn">Connect TronLink</button></div>
+  </header>
+
+  <section class="hero">
+    <div><div class="eyebrow">TRON TESTNET PLAYGROUND</div><h1>Play smart.<br><em>Test your luck.</em></h1>
+    <p>Three games, a testnet wallet panel and a transparent activity feed. Test TRX only — no real-money value.</p></div>
+    <div class="hero-die">🎲</div>
+  </section>
+
+  <section class="wallet">
+    <div><div class="muted small">CONNECTED WALLET</div><strong id="address">Not connected</strong><div class="muted small" id="balance">Connect TronLink on Nile testnet</div></div>
+    <div class="wallet-actions"><button id="deposit" class="outline" disabled>Deposit</button><button id="withdraw" class="outline" disabled>Withdraw</button></div>
+  </section>
+  <div class="notice" id="wallet-note">Wallet connection is available. Deposits and withdrawals stay locked until a reviewed game contract is deployed to Nile and its address is configured. Never send TRX to an unknown address.</div>
+
+  <nav class="tabs">
+    <button class="tab active" data-game="dice">🎲 Dice</button>
+    <button class="tab" data-game="mines">💣 Mines</button>
+    <button class="tab" data-game="crash">🚀 Crash</button>
+    <button class="tab" data-game="history">Activity</button>
+  </nav>
+
+  <main id="game"></main>
+  <section class="lower">
+    <div><div class="eyebrow">FAIR PLAY NOTICE</div><h3>Testnet only, by design.</h3><p>Current game rounds use local demo credits and browser randomness. They do not transfer TRX, create on-chain bets, or pay prizes. A secure on-chain game requires a deployed contract and verifiable randomness before deposits or withdrawals can be enabled.</p></div>
+    <div class="lower-stat"><strong>3</strong><span>GAMES</span><strong>NILE</strong><span>NETWORK TARGET</span></div>
+  </section>
+  <footer>LUCKYLAB · TRON TESTNET STARTER · NOT A REAL-MONEY CASINO</footer>
+</div>
+
+<div class="modal" id="wallet-modal" hidden>
+  <div class="modal-card"><button class="x" id="close-modal">×</button><div class="eyebrow">TESTNET WALLET</div><h2 id="modal-title">Deposit / Withdraw</h2>
+    <p id="modal-copy">Wallet transfers are disabled until the audited testnet contract is deployed and configured.</p>
+    <label>Amount (TRX)</label><input id="amount" type="number" min="1" step="0.1" placeholder="0.0" disabled>
+    <button class="cta" disabled>Contract not configured</button>
+    <p class="tiny">Do not send funds directly to a personal wallet address.</p>
+  </div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
