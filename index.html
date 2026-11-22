@@ -1,1 +1,100 @@
-<!doctype html><html lang="ur"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#064477"><title>Lucky Lab</title><link rel="stylesheet" href="style.css"></head><body><header><button id="menu">☰</button><a class="brand" href="#">🔺 Lucky Lab</a><div class="balance" id="balance">0.000000 TRX</div><button id="authBtn">Login</button></header><aside id="drawer"><button data-view="games">🎲 Games</button><button data-view="deposit">＋ Deposit</button><button data-view="withdraw">↗ Withdraw</button><button data-view="bets">All Bets</button><button data-view="mine">My Bets</button><button id="closeMenu">✕</button></aside><main><section id="auth" class="panel"><h2>Welcome to Lucky Lab</h2><div class="tabs"><button id="showLogin">Login</button><button id="showSignup">Sign Up</button></div><form id="authForm"><input id="username" placeholder="Username" required minlength="3"><input id="password" type="password" placeholder="Password" required minlength="6"><button class="primary">Continue</button></form><p class="muted">Create an account or sign in to continue.</p></section><section id="wallet" class="panel hidden"><h2>Wallet</h2><div class="walletgrid"><div><label>Balance</label><strong id="walletBalance">0 TRX</strong></div><div><label>Account</label><strong id="who">—</strong></div></div><div class="actions"><button data-view="deposit">Deposit</button><button data-view="withdraw">Withdraw</button></div></section><section id="games" class="panel"><h2>Games</h2><div class="gamegrid"><button class="game" data-game="Dice"><span>🎲</span><b>Dice</b></button><button class="game" data-game="Crash"><span>💥</span><b>Crash</b></button><button class="game" data-game="Mines"><span>💣</span><b>Mines</b></button></div></section><section id="play" class="panel hidden"><button id="back">← Games</button><h2 id="gameTitle">Dice</h2><label>Bet Amount (TRX)</label><input id="bet" type="number" min="0.000001" step="0.000001" value="0.0001"><div id="gameControls"></div><div id="gameResult"></div></section><section id="deposit" class="panel hidden"><h2>Deposit</h2><p>Deposit requests require a configured payment provider and verified wallet address.</p><label>Amount (TRX)</label><input id="depAmount" type="number" min="0.000001" step="0.000001"><label>Transaction ID</label><input id="txid" placeholder="Transaction hash"><button class="primary" id="depositRequest">Submit deposit request</button><p id="depMsg"></p></section><section id="withdraw" class="panel hidden"><h2>Withdraw</h2><label>Amount (TRX)</label><input id="withAmount" type="number" min="0.000001" step="0.000001"><label>TRON wallet address</label><input id="address" placeholder="T..." minlength="20"><button class="primary" id="withdrawRequest">Submit withdrawal request</button><p id="withMsg"></p></section><section id="bets" class="panel"><h2>All Bets</h2><div class="tablewrap"><table><thead><tr><th>User</th><th>Game</th><th>Bet</th><th>Result</th></tr></thead><tbody id="allBets"></tbody></table></div></section><section id="mine" class="panel"><h2>My Bets</h2><div class="tablewrap"><table><thead><tr><th>Game</th><th>Bet</th><th>Result</th><th>Time</th></tr></thead><tbody id="myBets"></tbody></table></div></section><footer>Lucky Lab · Account · Games · Wallet</footer></main><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lucky Lab</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <button id="menu" aria-label="Toggle menu">☰</button>
+  <a class="brand" href="#home">🔺 Lucky Lab</a>
+  <div class="wallet">🔺 <span id="balance">0.000000</span> TRX</div>
+  <button id="authBtn">Login</button>
+</header>
+<nav id="nav">
+  <a href="#home">Home</a><a href="#games">Games</a><a href="#wallet">Deposit</a>
+  <a href="#wallet">Withdraw</a><a href="#bets">All Bets</a><a href="#mybets">My Bets</a>
+</nav>
+<main>
+<section id="home" class="hero">
+  <div><small>LUCKY LAB • TESTNET DEMO</small><h1>Play your next<br><span>winning move.</span></h1>
+  <p>Dice, Crash and Mines — demo games for practice.</p>
+  <button class="primary" onclick="location.hash='games'">Explore games</button></div>
+  <div class="hero-card"><div class="coin">🔺</div><b>YOUR WALLET</b>
+  <strong id="heroBalance">0.000000 TRX</strong><small>Demo balance stored in this browser</small></div>
+</section>
+
+<section id="wallet">
+  <div class="sectionhead"><div><small>ACCOUNT</small><h2>Wallet</h2></div></div>
+  <div class="walletgrid">
+    <article><h3>Deposit</h3><p>Demo credit only. No blockchain transfer is made.</p>
+      <input id="depositAmount" type="number" min="0" step="0.000001" placeholder="Amount (TRX)">
+      <button class="primary" id="deposit">Add demo credits</button></article>
+    <article><h3>Withdraw</h3><p>Demo withdrawals are not connected to a blockchain.</p>
+      <input id="withdrawAmount" type="number" min="0" step="0.000001" placeholder="Amount (TRX)">
+      <input id="withdrawAddress" placeholder="Optional test wallet address">
+      <button class="primary" id="withdraw">Record demo request</button></article>
+  </div><p class="note" id="walletNote"></p>
+</section>
+
+<section id="games">
+  <div class="sectionhead"><div><small>CHOOSE YOUR GAME</small><h2>Games</h2></div></div>
+  <div class="gamegrid">
+    <button class="game" data-game="Dice"><div class="gameart dice">🎲</div><b>Dice</b><small>Roll and play</small></button>
+    <button class="game" data-game="Crash"><div class="gameart crash">🚀</div><b>Crash</b><small>Cash out in time</small></button>
+    <button class="game" data-game="Mines"><div class="gameart mines">💎</div><b>Mines</b><small>Find the gems</small></button>
+  </div>
+
+  <div id="gamepanel" class="gamepanel">
+    <h3 id="gameTitle">Dice</h3>
+    <div class="dice-layout">
+      <div class="dice-settings">
+        <label for="betAmount">Bet Amount (TRX)</label>
+        <div class="bet-line"><input id="betAmount" type="number" min="0.000001" step="0.000001" value="0.000100">
+          <button type="button" id="doubleBet">2X</button><button type="button" id="halfBet">1/2</button></div>
+        <label for="profitOnWin">Profit On Win</label>
+        <input id="profitOnWin" type="text" value="0.000098 TRX" readonly>
+        <div class="two-fields">
+          <div><label for="rollTarget">Roll over to win</label><input id="rollTarget" type="number" min="1" max="99.99" step="0.01" value="51.50"></div>
+          <div><label for="winChance">Win Chance</label><input id="winChance" type="text" value="48.50%" readonly></div>
+        </div>
+        <div class="two-fields">
+          <div><label for="multiplier">Multiplier</label><input id="multiplier" type="text" value="1.98x" readonly></div>
+          <div><label for="mode">Play mode</label><select id="mode"><option value="manual">Manual</option><option value="auto">Auto</option></select></div>
+        </div>
+        <div class="slider-head"><label for="targetSlider">Roll threshold</label><span id="sliderValue">51.50</span></div>
+        <input id="targetSlider" type="range" min="1" max="99" step="0.01" value="51.5">
+        <div class="range-labels"><span>0</span><span>100</span></div>
+        <div id="autoControls" class="auto-controls hidden">
+          <label for="autoRounds">Number of rolls</label><input id="autoRounds" type="number" min="1" max="500" value="10">
+        </div>
+        <button class="primary roll-button" id="play">ROLL DICE</button>
+      </div>
+      <div class="dice-output">
+        <div class="result-label">LAST ROLL</div><div id="diceNumber" class="dice-number">—</div>
+        <div id="gameResult" class="result-message">Set your bet and roll the dice.</div>
+        <div class="result-foot">Demo simulation only · not provably fair · no real TRX wagers</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bets"><div class="sectionhead"><div><small>ACTIVITY</small><h2>All Bets</h2></div></div>
+  <div class="tablewrap"><table><thead><tr><th>Player</th><th>Game</th><th>Bet</th><th>Result</th><th>Profit</th></tr></thead>
+  <tbody id="allBets"><tr><td colspan="5">No bets yet</td></tr></tbody></table></div></section>
+<section id="mybets"><div class="sectionhead"><div><small>YOUR ACTIVITY</small><h2>My Bets</h2></div></div>
+  <div class="tablewrap"><table><thead><tr><th>Player</th><th>Game</th><th>Bet</th><th>Result</th><th>Profit</th></tr></thead>
+  <tbody id="myBets"><tr><td colspan="5">Log in to view your bets</td></tr></tbody></table></div></section>
+</main>
+<footer>Lucky Lab <span>Testnet/demo practice only.</span></footer>
+
+<dialog id="authDialog"><form method="dialog" id="authForm"><button class="close" type="button" id="closeAuth">×</button>
+  <h2 id="authTitle">Create account</h2><input id="username" required minlength="3" maxlength="24" placeholder="Username">
+  <input id="password" type="password" required minlength="6" placeholder="Password">
+  <button class="primary" id="authSubmit" type="button">Sign up</button>
+  <p><button type="button" class="link" id="toggleAuth">Already have an account? Login</button></p><p id="authMessage"></p>
+</form></dialog>
+<script src="app.js"></script>
+</body></html>

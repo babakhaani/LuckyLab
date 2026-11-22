@@ -1,6 +1,149 @@
-'use strict';
-const $=id=>document.getElementById(id);let user=localStorage.getItem('ll_user')||'',balance=Number(localStorage.getItem('ll_balance')||0),bets=JSON.parse(localStorage.getItem('ll_bets')||'[]'),game='Dice',mines=[],revealed=[];
-const save=()=>{localStorage.setItem('ll_user',user);localStorage.setItem('ll_balance',String(balance));localStorage.setItem('ll_bets',JSON.stringify(bets));render()};const fmt=n=>Number(n).toFixed(6);function render(){ $('balance').textContent=fmt(balance)+' TRX';$('walletBalance').textContent=fmt(balance)+' TRX';$('who').textContent=user||'—';$('authBtn').textContent=user?'Logout':'Login';$('auth').classList.toggle('hidden',!!user);$('wallet').classList.toggle('hidden',!user);$('allBets').innerHTML=bets.slice(0,80).map(b=>`<tr><td>${esc(mask(b.user))}</td><td>${esc(b.game)}</td><td>${fmt(b.bet)}</td><td>${esc(b.result)}</td></tr>`).join('')||'<tr><td colspan="4">No bets yet</td></tr>';$('myBets').innerHTML=bets.filter(b=>b.user===user).slice(0,80).map(b=>`<tr><td>${esc(b.game)}</td><td>${fmt(b.bet)}</td><td>${esc(b.result)}</td><td>${esc(b.time)}</td></tr>`).join('')||'<tr><td colspan="4">No bets yet</td></tr>'}function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function mask(s){return s.length<3?s[0]+'*':s.slice(0,Math.ceil(s.length/2))+'*'.repeat(Math.max(2,s.length-Math.ceil(s.length/2)))}function record(result,bet){bets.unshift({user,game,bet,result,time:new Date().toLocaleString()});bets=bets.slice(0,200);save()}
-$('authForm').addEventListener('submit',e=>{e.preventDefault();let name=$('username').value.trim(),pass=$('password').value;if(!name||pass.length<6)return alert('Enter username and password (6+ characters).');let accounts=JSON.parse(localStorage.getItem('ll_accounts')||'{}');if($('authForm').dataset.mode==='signup'){if(accounts[name])return alert('Username already exists.');accounts[name]=pass;localStorage.setItem('ll_accounts',JSON.stringify(accounts))}else if(accounts[name]!==pass){return alert('Account not found or password incorrect. Sign up first.')}user=name;save()});$('showSignup').onclick=()=>{$('authForm').dataset.mode='signup';$('showSignup').style.background='#b9e3ff'};$('showLogin').onclick=()=>{$('authForm').dataset.mode='login';$('showSignup').style.background=''};$('authBtn').onclick=()=>{if(user){user='';save()}else{$('auth').classList.remove('hidden');window.scrollTo(0,0)}};$('menu').onclick=()=> $('drawer').classList.toggle('open');$('closeMenu').onclick=()=> $('drawer').classList.remove('open');document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));function show(id){['games','bets','mine','deposit','withdraw','play'].forEach(x=>$(x).classList.toggle('hidden',x!==id));$('drawer').classList.remove('open');if(id==='games')window.scrollTo(0,0)}document.querySelectorAll('[data-game]').forEach(b=>b.onclick=()=>start(b.dataset.game));$('back').onclick=()=>show('games');function start(g){game=g;show('play');$('gameTitle').textContent=g;$('gameResult').textContent='';$('gameControls').innerHTML='';if(g==='Dice')$('gameControls').innerHTML='<label>Roll over to win (1–99)</label><input id="target" type="number" min="2" max="98" value="50"><button class="primary" id="roll">ROLL DICE</button>';if(g==='Crash')$('gameControls').innerHTML='<label>Cashout multiplier</label><input id="cashout" type="number" min="1.1" step="0.1" value="2"><button class="primary" id="crash">START CRASH</button>';if(g==='Mines'){mines=Array.from({length:25},(_,i)=>i).sort(()=>Math.random()-.5).slice(0,4);revealed=[];$('gameControls').innerHTML='<label>Pick a tile. Four mines are hidden.</label><div class="minegrid">'+Array.from({length:25},(_,i)=>`<button data-tile="${i}">?</button>`).join('')+'</div><button class="primary" id="cashMines">Cash out</button>';$('gameControls').querySelectorAll('[data-tile]').forEach(b=>b.onclick=()=>pick(+b.dataset.tile))}if(g==='Dice')$('roll').onclick=roll;if(g==='Crash')$('crash').onclick=crash; if(g==='Mines')$('cashMines').onclick=cashMines}
-function stake(){let n=Number($('bet').value);if(!user){alert('Please login first.');return 0}if(!Number.isFinite(n)||n<=0||n>balance){alert('Enter a valid bet within your balance.');return 0}balance-=n;return n}function roll(){let b=stake();if(!b)return;let t=Math.max(2,Math.min(98,Number($('target').value)||50)),r=Math.random()*100,win=r>t,payout=win?b*99/(100-t):0;if(win)balance+=payout;record(win?'WIN '+fmt(payout-b):'LOSS',b);$('gameResult').textContent=`Roll: ${r.toFixed(2)} · ${win?'You won '+fmt(payout)+' TRX':'You lost '+fmt(b)+' TRX'}`;save()}function crash(){let b=stake();if(!b)return;let target=Math.max(1.1,Number($('cashout').value)||2),crashAt=1+Math.random()*5,win=crashAt>=target,payout=win?b*target:0;if(win)balance+=payout;record(win?'WIN '+fmt(payout-b):'LOSS',b);$('gameResult').textContent=`Crash at ${crashAt.toFixed(2)}x · ${win?'Won '+fmt(payout)+' TRX':'Lost '+fmt(b)+' TRX'}`;save()}function pick(i){if(revealed.includes(i))return;revealed.push(i);let b=Number($('bet').value);if(!user||b<=0||b>balance){alert('Login and enter a valid bet.');return}let btn=$('gameControls').querySelector(`[data-tile="${i}"]`);btn.textContent=mines.includes(i)?'💣':'💎';btn.disabled=true;if(mines.includes(i)){if(!revealed.length)balance-=b;record('MINE — LOSS',b);$('gameResult').textContent='Mine hit! Bet lost.';save()}else{$('gameResult').textContent=`Safe tile ${revealed.length}. Cash out to settle your bet.`}}function cashMines(){if(!revealed.length)return alert('Choose a tile first.');let b=Number($('bet').value),safe=revealed.filter(i=>!mines.includes(i)).length;if(safe){let payout=b*(1+safe*.22);balance+=payout;record('CASHOUT '+fmt(payout-b),b);$('gameResult').textContent='Cashout: '+fmt(payout)+' TRX';save()}}
-$('depositRequest').onclick=()=>{$('depMsg').textContent='Request recorded locally. Connect a verified payment backend to credit deposits.'};$('withdrawRequest').onclick=()=>{let n=Number($('withAmount').value),a=$('address').value.trim();if(!user||n<=0||n>balance||a.length<20){$('withMsg').textContent='Check login, amount and wallet address.';return}balance-=n;record('WITHDRAW REQUEST '+a.slice(0,5)+'…',n);$('withMsg').textContent='Request saved. A secure server/payment integration must process it.';save()};render();show('games');
+const $ = id => document.getElementById(id);
+const KEY = 'luckylab_state_v1';
+let state;
+try { state = JSON.parse(localStorage.getItem(KEY) || '{"users":{},"user":null,"balance":0,"bets":[]}'); }
+catch { state = {users:{}, user:null, balance:0, bets:[]}; }
+let authMode = 'signup';
+let selected = 'Dice';
+const HOUSE_EDGE = 0.01;
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(state));
+  render();
+}
+function currentUser() { return state.user ? state.users[state.user] : null; }
+function fmt(n) { return Number(n || 0).toFixed(6); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function masked(n) { return n.length < 3 ? n[0] + '***' : n.slice(0, Math.ceil(n.length/2)) + '***'; }
+
+function rows(bets, mine) {
+  return bets.slice().reverse().slice(0,50).map(b => `<tr>
+    <td class="player">${mine ? esc(b.username) : masked(b.username)}</td>
+    <td>${esc(b.game)}</td><td>${fmt(b.amount)}</td><td>${esc(b.result)}</td>
+    <td class="${b.profit >= 0 ? 'positive' : 'negative'}">${b.profit >= 0 ? '+' : ''}${fmt(b.profit)}</td>
+  </tr>`).join('');
+}
+function render() {
+  const bal = fmt(state.balance);
+  $('balance').textContent = bal;
+  $('heroBalance').textContent = bal + ' TRX';
+  $('authBtn').textContent = state.user ? 'Logout' : 'Login';
+  $('myBets').innerHTML = state.user
+    ? (state.bets.some(b => b.username === state.user) ? rows(state.bets.filter(b => b.username === state.user), true) : '<tr><td colspan="5">No bets yet</td></tr>')
+    : '<tr><td colspan="5">Log in to view your bets</td></tr>';
+  $('allBets').innerHTML = state.bets.length ? rows(state.bets, false) : '<tr><td colspan="5">No bets yet</td></tr>';
+  updateDiceValues();
+}
+function note(message) { $('walletNote').textContent = message; }
+
+$('authBtn').onclick = () => {
+  if (state.user) { state.user = null; save(); }
+  else { $('authMessage').textContent = ''; $('authDialog').showModal(); }
+};
+$('closeAuth').onclick = () => $('authDialog').close();
+$('toggleAuth').onclick = () => {
+  authMode = authMode === 'signup' ? 'login' : 'signup';
+  $('authTitle').textContent = authMode === 'signup' ? 'Create account' : 'Login';
+  $('authSubmit').textContent = authMode === 'signup' ? 'Sign up' : 'Login';
+  $('toggleAuth').textContent = authMode === 'signup' ? 'Already have an account? Login' : 'Need an account? Sign up';
+};
+$('authSubmit').onclick = () => {
+  const n = $('username').value.trim(), p = $('password').value;
+  if (n.length < 3 || p.length < 6) { $('authMessage').textContent = 'Username must be 3+ characters and password 6+.'; return; }
+  if (authMode === 'signup') {
+    if (state.users[n]) { $('authMessage').textContent = 'Username already exists.'; return; }
+    state.users[n] = {password:p, balance:0}; state.balance = 0;
+  } else {
+    if (!state.users[n] || state.users[n].password !== p) { $('authMessage').textContent = 'Incorrect username or password.'; return; }
+    state.balance = Number(state.users[n].balance || 0);
+  }
+  state.user = n; state.users[n].balance = state.balance; $('authDialog').close(); save();
+};
+
+// Explicitly demo-only credit controls; these do not send or receive blockchain funds.
+$('deposit').onclick = () => {
+  const a = Number($('depositAmount').value);
+  if (!state.user) return note('Please log in first.');
+  if (!(a > 0) || !Number.isFinite(a)) return note('Enter a valid demo amount.');
+  state.balance += a; state.users[state.user].balance = state.balance;
+  note('Demo credits added locally. No Testnet TRX was transferred.'); save();
+};
+$('withdraw').onclick = () => {
+  const a = Number($('withdrawAmount').value);
+  if (!state.user) return note('Please log in first.');
+  if (!(a > 0) || a > state.balance) return note('Enter a valid amount within your demo balance.');
+  state.balance -= a; state.users[state.user].balance = state.balance;
+  note('Demo balance reduced locally. No blockchain withdrawal was made.'); save();
+};
+
+function updateDiceValues() {
+  const target = Math.min(99.99, Math.max(1, Number($('rollTarget').value) || 51.5));
+  const chance = Math.max(0.01, 100 - target);
+  const multiplier = (100 - HOUSE_EDGE) / chance;
+  const bet = Math.max(0, Number($('betAmount').value) || 0);
+  $('rollTarget').value = target.toFixed(2);
+  $('targetSlider').value = Math.min(99, target);
+  $('sliderValue').textContent = target.toFixed(2);
+  $('winChance').value = chance.toFixed(2) + '%';
+  $('multiplier').value = multiplier.toFixed(4) + 'x';
+  $('profitOnWin').value = fmt(bet * (multiplier - 1)) + ' TRX';
+}
+$('rollTarget').addEventListener('input', updateDiceValues);
+$('targetSlider').addEventListener('input', () => { $('rollTarget').value = Number($('targetSlider').value).toFixed(2); updateDiceValues(); });
+$('betAmount').addEventListener('input', updateDiceValues);
+$('doubleBet').onclick = () => { $('betAmount').value = fmt(Number($('betAmount').value || 0) * 2); updateDiceValues(); };
+$('halfBet').onclick = () => { $('betAmount').value = fmt(Number($('betAmount').value || 0) / 2); updateDiceValues(); };
+$('mode').onchange = () => $('autoControls').classList.toggle('hidden', $('mode').value !== 'auto');
+
+function rollOnce() {
+  if (!state.user) return {error:'Please log in first.'};
+  const amount = Number($('betAmount').value);
+  if (!(amount > 0) || !Number.isFinite(amount)) return {error:'Enter a valid bet amount.'};
+  if (amount > state.balance) return {error:'Your demo balance is too low for this bet.'};
+  const target = Number($('rollTarget').value);
+  if (!(target >= 1 && target < 100)) return {error:'Set a threshold between 1 and 99.99.'};
+  const roll = Math.random() * 100;
+  const won = roll > target;
+  const chance = 100 - target;
+  const multiplier = (100 - HOUSE_EDGE) / chance;
+  const profit = won ? amount * (multiplier - 1) : -amount;
+  state.balance = Math.max(0, state.balance + profit);
+  state.users[state.user].balance = state.balance;
+  const result = `Roll ${roll.toFixed(2)} — ${won ? 'WIN' : 'LOSS'}`;
+  state.bets.push({username:state.user, game:'Dice', amount, result, profit, time:Date.now()});
+  return {roll, won, profit, amount, multiplier};
+}
+function playDice() {
+  const auto = $('mode').value === 'auto';
+  const rounds = auto ? Math.min(500, Math.max(1, Number($('autoRounds').value) || 1)) : 1;
+  let completed = 0, wins = 0, net = 0, last = null;
+  for (let i = 0; i < rounds; i++) {
+    last = rollOnce();
+    if (last.error) break;
+    completed++; if (last.won) wins++; net += last.profit;
+  }
+  if (last?.error) { $('gameResult').textContent = last.error; return; }
+  if (!last) return;
+  $('diceNumber').textContent = last.roll.toFixed(2);
+  $('diceNumber').classList.toggle('win', last.won);
+  $('diceNumber').classList.toggle('loss', !last.won);
+  $('gameResult').textContent = auto
+    ? `${completed} rolls completed · ${wins} wins · ${completed-wins} losses · Net ${net >= 0 ? '+' : ''}${fmt(net)} TRX`
+    : `${last.won ? 'You won!' : 'You lost.'} ${last.won ? 'Profit' : 'Loss'}: ${fmt(Math.abs(last.profit))} TRX`;
+  save();
+}
+$('play').onclick = playDice;
+
+document.querySelectorAll('.game').forEach(g => g.onclick = () => {
+  selected = g.dataset.game;
+  $('gameTitle').textContent = selected;
+  if (selected === 'Dice') {
+    $('gameResult').textContent = 'Set your bet and roll the dice.';
+    $('play').textContent = 'ROLL DICE';
+  } else {
+    $('gameResult').textContent = `${selected} is a visual demo placeholder. The fully working game in this build is Dice.`;
+    $('play').textContent = 'DICE GAME ONLY';
+  }
+});
+$('menu').onclick = () => $('nav').classList.toggle('hidden');
+render();
